@@ -52,13 +52,4 @@
     hideInstallButton();
   });
 
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/service-worker.js')
-        .catch(() => {
-          // file:// 또는 일부 환경에서는 등록 실패 가능
-        });
-    });
-  }
 })();

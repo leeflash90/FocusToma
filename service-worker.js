@@ -1,4 +1,4 @@
-const CACHE_NAME = 'focustoma-v3';
+const CACHE_NAME = 'focustoma-v4';
 
 const PRECACHE_URLS = [
   '/',
@@ -12,6 +12,8 @@ const PRECACHE_URLS = [
   '/icons/favicon-32.png',
   '/icons/favicon-16.png',
   '/icons/icon.svg',
+  '/screenshots/mobile.png',
+  '/screenshots/wide.png',
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700&display=swap',
 ];
