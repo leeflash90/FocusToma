@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FocusToma">
+  <rect width="512" height="512" rx="112" fill="#0B0B0F"/>
+  <circle cx="256" cy="276" r="194" fill="none" stroke="#2A2A36" stroke-width="28"/>
+  <circle cx="256" cy="276" r="133" fill="#E63946"/>
+  <ellipse cx="214" cy="228" rx="38" ry="34" fill="#FF5C68" opacity="0.85"/>
+  <ellipse cx="290" cy="318" rx="52" ry="28" fill="#C42F3A" opacity="0.5"/>
+  <rect x="236" y="118" width="40" height="36" rx="20" fill="#2D6A4F"/>
+  <ellipse cx="278" cy="128" rx="22" ry="14" fill="#2D6A4F"/>
+  <circle cx="256" cy="276" r="194" fill="none" stroke="#E63946" stroke-width="28" stroke-linecap="round" stroke-dasharray="420 820" transform="rotate(110 256 276)"/>
+  <line x1="256" y1="276" x2="198" y2="218" stroke="#FAFAFA" stroke-width="22" stroke-linecap="round"/>
+  <line x1="256" y1="276" x2="314" y2="218" stroke="#FAFAFA" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="256" cy="276" r="14" fill="#E8E8EC"/>
+</svg>

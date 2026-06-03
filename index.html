@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#E63946" />
+  <meta name="description" content="뽀모도로 집중 타이머와 오늘 할 일 관리" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FocusToma" />
+  <title>FocusToma</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="icon" href="/icons/favicon-16.png" type="image/png" sizes="16x16" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans KR"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            tomato: '#E63946',
+            surface: '#0B0B0F',
+            muted: '#15151C',
+            card: '#1A1A24',
+            line: '#2A2A36',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+        env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    .scrollbar-thin {
+      scrollbar-width: thin;
+      scrollbar-color: #3f3f46 transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background-color: #3f3f46;
+      border-radius: 9999px;
+    }
+
+    .tab-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .tab-scroll::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen min-h-[100dvh] bg-surface font-sans text-zinc-100 antialiased">
+  <div class="mx-auto flex min-h-screen min-h-[100dvh] w-full max-w-6xl flex-col">
+    <!-- Header -->
+    <header class="shrink-0 px-4 pb-2 pt-5 sm:px-6 sm:pt-6 lg:px-8">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
+          <h1
+            id="app-title"
+            class="text-lg font-bold tracking-tight transition-colors duration-300 sm:text-2xl"
+            style="color: #E63946"
+          >
+            FocusToma
+          </h1>
+
+          <div class="tab-scroll -mx-1 mt-4 overflow-x-auto pb-1 sm:mx-0">
+            <nav
+              class="inline-flex min-w-max gap-1 rounded-full border border-line bg-muted p-1"
+              role="tablist"
+              aria-label="타이머 모드"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected="true"
+                data-mode="focus"
+                class="mode-tab whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-300 sm:px-4"
+              >
+                집중
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected="false"
+                data-mode="short"
+                class="mode-tab whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-300 sm:px-4"
+              >
+                짧은 휴식
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected="false"
+                data-mode="long"
+                class="mode-tab whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-300 sm:px-4"
+              >
+                긴 휴식
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        <div class="mt-0.5 flex shrink-0 flex-col gap-2 sm:flex-row">
+          <button
+            id="install-app-btn"
+            type="button"
+            class="hidden rounded-xl border border-tomato/40 bg-tomato/10 px-3.5 py-2.5 text-sm font-medium text-tomato transition hover:bg-tomato/20 active:scale-[0.98]"
+          >
+            앱 설치
+          </button>
+          <button
+            id="settings-open-btn"
+            type="button"
+            class="rounded-xl border border-line bg-card px-3.5 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-muted active:scale-[0.98]"
+          >
+            설정
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Settings modal -->
+    <div
+      id="settings-modal"
+      class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+      aria-hidden="true"
+    >
+      <div
+        id="settings-backdrop"
+        class="absolute inset-0 bg-black/60"
+        aria-hidden="true"
+      ></div>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-title"
+        class="relative z-10 max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-line bg-card p-5 shadow-2xl sm:p-6"
+      >
+        <h2 id="settings-title" class="text-lg font-semibold text-zinc-50">
+          설정
+        </h2>
+
+        <form id="settings-form" class="mt-5 space-y-4">
+          <label class="block">
+            <span class="text-sm font-medium text-zinc-300">집중 시간 (분)</span>
+            <input
+              id="setting-focus"
+              type="number"
+              min="1"
+              max="180"
+              required
+              class="mt-1.5 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-zinc-50 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/40"
+            />
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium text-zinc-300">짧은 휴식 (분)</span>
+            <input
+              id="setting-short"
+              type="number"
+              min="1"
+              max="60"
+              required
+              class="mt-1.5 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-zinc-50 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/40"
+            />
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium text-zinc-300">긴 휴식 (분)</span>
+            <input
+              id="setting-long"
+              type="number"
+              min="1"
+              max="120"
+              required
+              class="mt-1.5 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-zinc-50 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/40"
+            />
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium text-zinc-300">긴 휴식 주기 (집중 N회마다)</span>
+            <input
+              id="setting-cycle"
+              type="number"
+              min="2"
+              max="12"
+              required
+              class="mt-1.5 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-zinc-50 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/40"
+            />
+          </label>
+          <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface px-3 py-3">
+            <input
+              id="setting-autostart"
+              type="checkbox"
+              class="size-4 rounded border-zinc-500 bg-surface text-tomato focus:ring-tomato"
+            />
+            <span class="text-sm text-zinc-100">세션 종료 후 자동 시작</span>
+          </label>
+
+          <p id="settings-error" class="hidden text-sm text-tomato"></p>
+
+          <div class="flex justify-end gap-2 pt-2">
+            <button
+              id="settings-cancel-btn"
+              type="button"
+              class="rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-400 transition hover:text-zinc-200"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              class="rounded-lg bg-tomato px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#d42f3c] active:scale-[0.98]"
+            >
+              저장
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="flex min-h-0 flex-1 flex-col lg:flex-row">
+    <!-- Main -->
+    <main class="flex flex-1 flex-col items-center justify-center px-4 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+      <div
+        class="relative grid size-[min(16.5rem,calc(100vw-2.5rem))] place-items-center sm:size-[20rem] md:size-[22rem] lg:size-[24rem]"
+      >
+        <svg
+          class="pointer-events-none absolute inset-0 size-full -rotate-90"
+          viewBox="0 0 200 200"
+          aria-hidden="true"
+        >
+          <circle
+            cx="100"
+            cy="100"
+            r="92"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="5"
+            class="text-line"
+          />
+          <circle
+            id="progress-ring"
+            cx="100"
+            cy="100"
+            r="92"
+            fill="none"
+            stroke-width="5"
+            stroke-linecap="round"
+            class="transition-[stroke-dashoffset,stroke] duration-1000 ease-linear"
+            style="stroke: #E63946"
+          />
+        </svg>
+        <div
+          id="timer-display"
+          class="relative z-10 font-mono text-[clamp(3rem,16vw,5.5rem)] font-medium leading-none tracking-tight text-white sm:text-[5.5rem] lg:text-[6rem]"
+          aria-live="polite"
+          aria-label="남은 시간"
+        >
+          25:00
+        </div>
+      </div>
+
+      <div class="mt-8 flex w-full max-w-[18rem] flex-col gap-3 sm:mt-10 sm:max-w-xs sm:flex-row sm:justify-center">
+        <button
+          id="start-btn"
+          type="button"
+          class="min-h-[3rem] flex-1 rounded-full px-8 py-3.5 text-base font-semibold text-white shadow-lg transition-[background-color,box-shadow] duration-300 active:scale-[0.98]"
+          style="background-color: #E63946; box-shadow: 0 10px 15px -3px rgba(230, 57, 70, 0.25)"
+        >
+          시작
+        </button>
+        <button
+          id="reset-btn"
+          type="button"
+          class="min-h-[3rem] flex-1 rounded-full border border-line bg-card px-8 py-3.5 text-base font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-muted active:scale-[0.98]"
+        >
+          리셋
+        </button>
+      </div>
+
+      <div
+        id="session-indicator"
+        class="mt-8 flex flex-col items-center gap-2 sm:mt-10"
+        aria-label="집중 세션 진행"
+      >
+        <div id="session-dots" class="flex flex-wrap items-center justify-center gap-2"></div>
+        <p id="session-label" class="text-sm font-medium tabular-nums text-zinc-400">1 / 4</p>
+      </div>
+    </main>
+
+    <!-- Todo sidebar -->
+    <aside
+      class="scrollbar-thin flex w-full shrink-0 flex-col border-t border-line bg-card/50 px-4 py-5 sm:px-5 sm:py-6 lg:max-h-[calc(100dvh-7rem)] lg:w-[22rem] lg:overflow-y-auto lg:border-l lg:border-t-0 xl:w-96"
+      aria-label="오늘 할 일"
+    >
+      <div class="flex items-baseline justify-between gap-3">
+        <h2 class="text-base font-semibold text-zinc-50">오늘 할 일</h2>
+        <p
+          id="todo-stats"
+          class="text-sm font-medium tabular-nums text-zinc-400"
+          aria-live="polite"
+        >
+          0 / 0
+        </p>
+      </div>
+
+      <form id="todo-form" class="mt-4 flex gap-2">
+        <input
+          id="todo-input"
+          type="text"
+          maxlength="200"
+          placeholder="할 일을 입력하세요"
+          autocomplete="off"
+          class="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-3 text-sm text-zinc-50 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/40"
+        />
+        <button
+          id="todo-add-btn"
+          type="submit"
+          class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-zinc-600 text-lg font-medium text-white transition hover:bg-zinc-500 active:scale-[0.98]"
+          aria-label="할 일 추가"
+        >
+          +
+        </button>
+      </form>
+
+      <ul
+        id="todo-list"
+        class="scrollbar-thin mt-4 flex max-h-[12rem] flex-col gap-0.5 overflow-y-auto sm:max-h-[14rem] lg:max-h-[min(16rem,30vh)] lg:flex-1"
+      ></ul>
+
+      <p id="todo-empty" class="mt-5 hidden text-center text-sm text-zinc-400">
+        할 일이 없습니다
+      </p>
+
+      <section
+        class="mt-5 shrink-0 border-t border-line pt-5 sm:mt-6"
+        aria-label="오늘의 기록"
+      >
+        <h2 class="text-base font-semibold text-zinc-50">오늘의 기록</h2>
+        <div class="mt-3 grid grid-cols-2 gap-2.5 sm:gap-3">
+          <div class="rounded-xl border border-line bg-surface px-3 py-3 sm:px-4 sm:py-3.5">
+            <p class="text-xs font-medium text-zinc-400">완료한 집중</p>
+            <p
+              id="stats-sessions"
+              class="mt-1.5 text-xl font-semibold tabular-nums text-zinc-50"
+            >
+              0회
+            </p>
+          </div>
+          <div class="rounded-xl border border-line bg-surface px-3 py-3 sm:px-4 sm:py-3.5">
+            <p class="text-xs font-medium text-zinc-400">집중 시간</p>
+            <p
+              id="stats-minutes"
+              class="mt-1.5 text-xl font-semibold tabular-nums text-zinc-50"
+            >
+              0분
+            </p>
+          </div>
+        </div>
+      </section>
+    </aside>
+    </div>
+  </div>
+
+  <script>
+    const MODES = {
+      focus: {
+        label: '집중',
+        seconds: 25 * 60,
+        color: '#E63946',
+        hover: '#d42f3c',
+        shadow: 'rgba(230, 57, 70, 0.25)',
+      },
+      short: {
+        label: '짧은 휴식',
+        seconds: 5 * 60,
+        color: '#22C55E',
+        hover: '#16A34A',
+        shadow: 'rgba(34, 197, 94, 0.25)',
+      },
+      long: {
+        label: '긴 휴식',
+        seconds: 15 * 60,
+        color: '#3B82F6',
+        hover: '#2563EB',
+        shadow: 'rgba(59, 130, 246, 0.25)',
+      },
+    };
+
+    const BASE_TITLE = 'FocusToma';
+    const STORAGE_KEY = 'focustoma:v1';
+    const SESSION_NOTIFICATIONS = {
+      focus: {
+        title: '집중 시간 종료',
+        body: '잘했어요! 이제 휴식하세요.',
+      },
+      short: {
+        title: '짧은 휴식 종료',
+        body: '다시 집중할 시간이에요.',
+      },
+      long: {
+        title: '긴 휴식 종료',
+        body: '다시 집중할 시간이에요.',
+      },
+    };
+    const DEFAULT_SETTINGS = {
+      focusMinutes: 25,
+      shortBreakMinutes: 5,
+      longBreakMinutes: 15,
+      longBreakCycle: 4,
+      autoStart: true,
+    };
+    const RING_RADIUS = 92;
+    const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+    const displayEl = document.getElementById('timer-display');
+    const progressRing = document.getElementById('progress-ring');
+    const appTitle = document.getElementById('app-title');
+    const startBtn = document.getElementById('start-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const modeTabs = document.querySelectorAll('.mode-tab');
+    const sessionDots = document.getElementById('session-dots');
+    const sessionLabel = document.getElementById('session-label');
+    const todoForm = document.getElementById('todo-form');
+    const todoInput = document.getElementById('todo-input');
+    const todoList = document.getElementById('todo-list');
+    const todoStats = document.getElementById('todo-stats');
+    const todoEmpty = document.getElementById('todo-empty');
+    const statsSessionsEl = document.getElementById('stats-sessions');
+    const statsMinutesEl = document.getElementById('stats-minutes');
+    const settingsOpenBtn = document.getElementById('settings-open-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsBackdrop = document.getElementById('settings-backdrop');
+    const settingsForm = document.getElementById('settings-form');
+    const settingsCancelBtn = document.getElementById('settings-cancel-btn');
+    const settingsError = document.getElementById('settings-error');
+    const settingFocusInput = document.getElementById('setting-focus');
+    const settingShortInput = document.getElementById('setting-short');
+    const settingLongInput = document.getElementById('setting-long');
+    const settingCycleInput = document.getElementById('setting-cycle');
+    const settingAutostartInput = document.getElementById('setting-autostart');
+
+    let appSettings = { ...DEFAULT_SETTINGS };
+    let focusRounds = DEFAULT_SETTINGS.longBreakCycle;
+    let currentMode = 'focus';
+    let todos = [];
+    let nextTodoId = 1;
+    let totalSeconds = MODES.focus.seconds;
+    let remainingSeconds = totalSeconds;
+    let intervalId = null;
+    let focusRound = 1;
+    let dailyStats = { date: '', sessions: 0, focusMinutes: 0 };
+    let saveTimeoutId = null;
+    let audioContext = null;
+
+    progressRing.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
+
+    function getAudioContext() {
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return null;
+        audioContext = new AudioCtx();
+      }
+      return audioContext;
+    }
+
+    function resumeAudioContext() {
+      const ctx = getAudioContext();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume();
+      }
+    }
+
+    function playBeep() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      resumeAudioContext();
+
+      const now = ctx.currentTime;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.28, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+
+      oscillator.start(now);
+      oscillator.stop(now + 0.2);
+    }
+
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) return;
+
+      if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    }
+
+    function showSessionNotification(completedMode) {
+      if (!('Notification' in window) || Notification.permission !== 'granted') {
+        return;
+      }
+
+      const message = SESSION_NOTIFICATIONS[completedMode];
+      if (!message) return;
+
+      new Notification(message.title, {
+        body: message.body,
+        tag: `focustoma-${completedMode}`,
+      });
+    }
+
+    function notifySessionEnd(completedMode) {
+      playBeep();
+      showSessionNotification(completedMode);
+    }
+
+    function updateDocumentTitle() {
+      const modeLabel = MODES[currentMode].label;
+      document.title = `${formatTime(remainingSeconds)} · ${modeLabel} · ${BASE_TITLE}`;
+    }
+
+    function isTypingTarget(target) {
+      return target.matches('input, textarea, select, [contenteditable="true"]');
+    }
+
+    function applySettingsToModes() {
+      MODES.focus.seconds = appSettings.focusMinutes * 60;
+      MODES.short.seconds = appSettings.shortBreakMinutes * 60;
+      MODES.long.seconds = appSettings.longBreakMinutes * 60;
+      focusRounds = appSettings.longBreakCycle;
+    }
+
+    function clampFocusRound() {
+      if (focusRound > focusRounds) {
+        focusRound = focusRounds;
+      }
+      if (focusRound < 1) {
+        focusRound = 1;
+      }
+    }
+
+    function getTodayKey() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function createEmptyDailyStats() {
+      return { date: getTodayKey(), sessions: 0, focusMinutes: 0 };
+    }
+
+    function ensureDailyStatsForToday() {
+      const today = getTodayKey();
+      if (dailyStats.date !== today) {
+        dailyStats = createEmptyDailyStats();
+        updateDailyStatsDisplay();
+      }
+    }
+
+    function updateDailyStatsDisplay() {
+      statsSessionsEl.textContent = `${dailyStats.sessions}회`;
+      statsMinutesEl.textContent = `${dailyStats.focusMinutes}분`;
+    }
+
+    function recordFocusSession() {
+      ensureDailyStatsForToday();
+      dailyStats.sessions += 1;
+      dailyStats.focusMinutes += MODES.focus.seconds / 60;
+      updateDailyStatsDisplay();
+      saveAppState();
+    }
+
+    function saveAppState() {
+      ensureDailyStatsForToday();
+
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            timer: {
+              currentMode,
+              remainingSeconds,
+              focusRound,
+            },
+            todos: {
+              items: todos,
+              nextTodoId,
+            },
+            stats: dailyStats,
+            settings: appSettings,
+          }),
+        );
+      } catch {
+        // 저장 공간 부족 등은 무시
+      }
+    }
+
+    function scheduleSave() {
+      clearTimeout(saveTimeoutId);
+      saveTimeoutId = setTimeout(saveAppState, 400);
+    }
+
+    function loadAppState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          dailyStats = createEmptyDailyStats();
+          return;
+        }
+
+        const data = JSON.parse(raw);
+
+        if (data.settings) {
+          const s = data.settings;
+          if (Number.isFinite(s.focusMinutes) && s.focusMinutes >= 1) {
+            appSettings.focusMinutes = Math.min(180, Math.floor(s.focusMinutes));
+          }
+          if (Number.isFinite(s.shortBreakMinutes) && s.shortBreakMinutes >= 1) {
+            appSettings.shortBreakMinutes = Math.min(
+              60,
+              Math.floor(s.shortBreakMinutes),
+            );
+          }
+          if (Number.isFinite(s.longBreakMinutes) && s.longBreakMinutes >= 1) {
+            appSettings.longBreakMinutes = Math.min(
+              120,
+              Math.floor(s.longBreakMinutes),
+            );
+          }
+          if (
+            Number.isInteger(s.longBreakCycle) &&
+            s.longBreakCycle >= 2 &&
+            s.longBreakCycle <= 12
+          ) {
+            appSettings.longBreakCycle = s.longBreakCycle;
+          }
+          if (typeof s.autoStart === 'boolean') {
+            appSettings.autoStart = s.autoStart;
+          }
+        }
+
+        applySettingsToModes();
+
+        if (data.timer && MODES[data.timer.currentMode]) {
+          currentMode = data.timer.currentMode;
+          totalSeconds = MODES[currentMode].seconds;
+          const savedRemaining = Number(data.timer.remainingSeconds);
+          if (
+            Number.isFinite(savedRemaining) &&
+            savedRemaining >= 0 &&
+            savedRemaining <= totalSeconds
+          ) {
+            remainingSeconds = savedRemaining;
+          } else {
+            remainingSeconds = totalSeconds;
+          }
+
+          const savedRound = Number(data.timer.focusRound);
+          if (
+            Number.isInteger(savedRound) &&
+            savedRound >= 1 &&
+            savedRound <= focusRounds
+          ) {
+            focusRound = savedRound;
+          }
+        }
+
+        clampFocusRound();
+
+        if (data.todos && Array.isArray(data.todos.items)) {
+          todos = data.todos.items
+            .filter(
+              (item) =>
+                item &&
+                typeof item.text === 'string' &&
+                typeof item.completed === 'boolean',
+            )
+            .map((item) => ({
+              id: Number(item.id),
+              text: sanitizeTodoText(item.text),
+              completed: item.completed,
+            }))
+            .filter((item) => item.text && Number.isFinite(item.id));
+
+          const maxId = todos.reduce((max, item) => Math.max(max, item.id), 0);
+          const savedNextId = Number(data.todos.nextTodoId);
+          nextTodoId =
+            Number.isFinite(savedNextId) && savedNextId > maxId
+              ? savedNextId
+              : maxId + 1;
+        }
+
+        const today = getTodayKey();
+        if (
+          data.stats &&
+          data.stats.date === today &&
+          Number.isFinite(data.stats.sessions) &&
+          Number.isFinite(data.stats.focusMinutes)
+        ) {
+          dailyStats = {
+            date: today,
+            sessions: Math.max(0, Math.floor(data.stats.sessions)),
+            focusMinutes: Math.max(0, Math.floor(data.stats.focusMinutes)),
+          };
+        } else {
+          dailyStats = createEmptyDailyStats();
+        }
+      } catch {
+        dailyStats = createEmptyDailyStats();
+      }
+    }
+
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function applyTheme() {
+      const { color, hover, shadow } = MODES[currentMode];
+
+      appTitle.style.color = color;
+      progressRing.style.stroke = color;
+      startBtn.style.backgroundColor = color;
+      startBtn.style.boxShadow = `0 10px 15px -3px ${shadow}`;
+      startBtn.dataset.hoverColor = hover;
+      startBtn.dataset.baseColor = color;
+
+      modeTabs.forEach((tab) => {
+        const isActive = tab.dataset.mode === currentMode;
+        tab.setAttribute('aria-selected', String(isActive));
+        tab.style.color = isActive ? '#fff' : '#d4d4d8';
+        tab.style.backgroundColor = isActive ? color : 'transparent';
+      });
+    }
+
+    startBtn.addEventListener('mouseenter', () => {
+      if (startBtn.dataset.hoverColor) {
+        startBtn.style.backgroundColor = startBtn.dataset.hoverColor;
+      }
+    });
+
+    startBtn.addEventListener('mouseleave', () => {
+      if (startBtn.dataset.baseColor) {
+        startBtn.style.backgroundColor = startBtn.dataset.baseColor;
+      }
+    });
+
+    function updateProgressRing() {
+      const fraction = totalSeconds > 0 ? remainingSeconds / totalSeconds : 0;
+      progressRing.style.strokeDashoffset = `${RING_CIRCUMFERENCE * (1 - fraction)}`;
+    }
+
+    function updateDisplay() {
+      displayEl.textContent = formatTime(remainingSeconds);
+      updateProgressRing();
+      updateDocumentTitle();
+      scheduleSave();
+    }
+
+    function updateSessionIndicator() {
+      const accent = MODES.focus.color;
+
+      sessionDots.replaceChildren();
+      for (let i = 1; i <= focusRounds; i += 1) {
+        const dot = document.createElement('span');
+        dot.className = 'size-2.5 rounded-full transition-colors duration-300';
+
+        if (i < focusRound) {
+          dot.style.backgroundColor = accent;
+          dot.style.opacity = '0.35';
+        } else if (i === focusRound) {
+          dot.style.backgroundColor = accent;
+          dot.classList.add('size-3');
+        } else {
+          dot.style.backgroundColor = '#3f3f46';
+        }
+
+        sessionDots.appendChild(dot);
+      }
+
+      sessionLabel.textContent = `${focusRound} / ${focusRounds}`;
+      scheduleSave();
+    }
+
+    function switchToMode(modeId, { autoStart = false } = {}) {
+      if (!MODES[modeId]) return;
+
+      stopTimer();
+      currentMode = modeId;
+      totalSeconds = MODES[modeId].seconds;
+      remainingSeconds = totalSeconds;
+      applyTheme();
+      updateDisplay();
+
+      if (autoStart) {
+        startTimer();
+      }
+    }
+
+    function setMode(modeId, options = {}) {
+      const { force = false, autoStart = false } = options;
+      if (!MODES[modeId]) return;
+      if (!force && modeId === currentMode) return;
+
+      switchToMode(modeId, { autoStart });
+    }
+
+    function onSessionComplete() {
+      if (currentMode === 'focus') {
+        recordFocusSession();
+
+        const nextBreak = focusRound === focusRounds ? 'long' : 'short';
+
+        if (focusRound === focusRounds) {
+          focusRound = 1;
+        } else {
+          focusRound += 1;
+        }
+
+        updateSessionIndicator();
+        switchToMode(nextBreak, { autoStart: appSettings.autoStart });
+        return;
+      }
+
+      if (currentMode === 'short' || currentMode === 'long') {
+        switchToMode('focus', { autoStart: appSettings.autoStart });
+      }
+    }
+
+    function setStartButtonLabel(running) {
+      startBtn.textContent = running ? '일시정지' : '시작';
+    }
+
+    function clearTimerInterval() {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+
+    function stopTimer() {
+      clearTimerInterval();
+      setStartButtonLabel(false);
+    }
+
+    function tick() {
+      if (remainingSeconds <= 0) {
+        stopTimer();
+        return;
+      }
+
+      remainingSeconds -= 1;
+      updateDisplay();
+
+      if (remainingSeconds === 0) {
+        const completedMode = currentMode;
+        stopTimer();
+        notifySessionEnd(completedMode);
+        onSessionComplete();
+      }
+    }
+
+    function startTimer() {
+      if (remainingSeconds === 0) return;
+
+      resumeAudioContext();
+      clearTimerInterval();
+      intervalId = setInterval(tick, 1000);
+      setStartButtonLabel(true);
+    }
+
+    function toggleTimer() {
+      if (intervalId !== null) {
+        stopTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    startBtn.addEventListener('click', () => {
+      resumeAudioContext();
+      requestNotificationPermission();
+      toggleTimer();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      stopTimer();
+      remainingSeconds = totalSeconds;
+      updateDisplay();
+    });
+
+    modeTabs.forEach((tab) => {
+      tab.addEventListener('click', () => setMode(tab.dataset.mode));
+    });
+
+    function sanitizeTodoText(raw) {
+      return raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim();
+    }
+
+    function updateTodoStats() {
+      const total = todos.length;
+      const remaining = todos.filter((item) => !item.completed).length;
+      todoStats.textContent = `${remaining} / ${total}`;
+      todoEmpty.classList.toggle('hidden', total > 0);
+      todoList.classList.toggle('hidden', total === 0);
+    }
+
+    function renderTodos() {
+      todoList.replaceChildren();
+
+      todos.forEach((item) => {
+        const li = document.createElement('li');
+        li.className =
+          'group flex items-start gap-2 rounded-xl px-2.5 py-2.5 transition hover:bg-muted';
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'min-w-0 flex-1 text-left text-sm leading-relaxed text-zinc-100';
+        toggleBtn.dataset.id = String(item.id);
+        toggleBtn.dataset.action = 'toggle';
+        toggleBtn.setAttribute('aria-pressed', String(item.completed));
+
+        if (item.completed) {
+          toggleBtn.classList.add('text-zinc-400', 'line-through');
+        }
+
+        toggleBtn.textContent = item.text;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className =
+          'shrink-0 rounded-lg p-1.5 text-lg leading-none text-zinc-400 opacity-100 transition hover:bg-line hover:text-zinc-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100';
+        deleteBtn.dataset.id = String(item.id);
+        deleteBtn.dataset.action = 'delete';
+        deleteBtn.setAttribute('aria-label', '할 일 삭제');
+        deleteBtn.textContent = '×';
+
+        li.append(toggleBtn, deleteBtn);
+        todoList.appendChild(li);
+      });
+
+      updateTodoStats();
+      saveAppState();
+    }
+
+    function addTodo() {
+      const text = sanitizeTodoText(todoInput.value);
+      if (!text) return;
+
+      todos.push({ id: nextTodoId, text, completed: false });
+      nextTodoId += 1;
+      todoInput.value = '';
+      renderTodos();
+    }
+
+    function toggleTodo(id) {
+      const item = todos.find((todo) => todo.id === id);
+      if (!item) return;
+
+      item.completed = !item.completed;
+      renderTodos();
+    }
+
+    function removeTodo(id) {
+      todos = todos.filter((todo) => todo.id !== id);
+      renderTodos();
+    }
+
+    todoForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      addTodo();
+    });
+
+    todoList.addEventListener('click', (event) => {
+      const btn = event.target.closest('button[data-action]');
+      if (!btn) return;
+
+      const id = Number(btn.dataset.id);
+      if (Number.isNaN(id)) return;
+
+      if (btn.dataset.action === 'delete') {
+        removeTodo(id);
+        return;
+      }
+
+      if (btn.dataset.action === 'toggle') {
+        toggleTodo(id);
+      }
+    });
+
+    function openSettingsModal() {
+      settingFocusInput.value = String(appSettings.focusMinutes);
+      settingShortInput.value = String(appSettings.shortBreakMinutes);
+      settingLongInput.value = String(appSettings.longBreakMinutes);
+      settingCycleInput.value = String(appSettings.longBreakCycle);
+      settingAutostartInput.checked = appSettings.autoStart;
+      settingsError.classList.add('hidden');
+      settingsError.textContent = '';
+
+      settingsModal.classList.remove('hidden');
+      settingsModal.classList.add('flex');
+      settingsModal.setAttribute('aria-hidden', 'false');
+      settingFocusInput.focus();
+    }
+
+    function closeSettingsModal() {
+      settingsModal.classList.add('hidden');
+      settingsModal.classList.remove('flex');
+      settingsModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function parseSettingMinutes(value, min, max) {
+      const num = Number(value);
+      if (!Number.isFinite(num) || !Number.isInteger(num) || num < min || num > max) {
+        return null;
+      }
+      return num;
+    }
+
+    function saveSettingsFromForm() {
+      const focusMinutes = parseSettingMinutes(settingFocusInput.value, 1, 180);
+      const shortBreakMinutes = parseSettingMinutes(settingShortInput.value, 1, 60);
+      const longBreakMinutes = parseSettingMinutes(settingLongInput.value, 1, 120);
+      const longBreakCycle = parseSettingMinutes(settingCycleInput.value, 2, 12);
+
+      if (
+        focusMinutes === null ||
+        shortBreakMinutes === null ||
+        longBreakMinutes === null ||
+        longBreakCycle === null
+      ) {
+        settingsError.textContent = '올바른 값을 입력해 주세요.';
+        settingsError.classList.remove('hidden');
+        return;
+      }
+
+      appSettings = {
+        focusMinutes,
+        shortBreakMinutes,
+        longBreakMinutes,
+        longBreakCycle,
+        autoStart: settingAutostartInput.checked,
+      };
+
+      applySettingsToModes();
+      stopTimer();
+      clampFocusRound();
+      totalSeconds = MODES[currentMode].seconds;
+      remainingSeconds = totalSeconds;
+      applyTheme();
+      updateSessionIndicator();
+      updateDisplay();
+      saveAppState();
+      closeSettingsModal();
+    }
+
+    settingsOpenBtn.addEventListener('click', openSettingsModal);
+    settingsCancelBtn.addEventListener('click', closeSettingsModal);
+    settingsBackdrop.addEventListener('click', closeSettingsModal);
+
+    settingsForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      saveSettingsFromForm();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !settingsModal.classList.contains('hidden')) {
+        closeSettingsModal();
+        return;
+      }
+
+      if (event.code !== 'Space' && event.key !== ' ') return;
+      if (isTypingTarget(event.target) || event.target.closest('button, a')) return;
+
+      event.preventDefault();
+      resumeAudioContext();
+      requestNotificationPermission();
+      toggleTimer();
+    });
+
+    window.addEventListener('beforeunload', saveAppState);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+
+      const prevDate = dailyStats.date;
+      ensureDailyStatsForToday();
+
+      if (prevDate !== dailyStats.date) {
+        saveAppState();
+      }
+    });
+
+    requestNotificationPermission();
+
+    applySettingsToModes();
+    loadAppState();
+    applyTheme();
+    updateSessionIndicator();
+    updateDailyStatsDisplay();
+    updateDisplay();
+    renderTodos();
+  </script>
+  <script src="/pwa.js" defer></script>
+</body>
+</html>
