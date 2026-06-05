@@ -1,0 +1,4 @@
+#Wed Jun 03 21:32:09 KST 2026
+base.0=/Users/ivan.l/Desktop/FocusToma/app/build/intermediates/dex/release/minifyReleaseWithR8/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex
